@@ -1,0 +1,60 @@
+version: '3.8'
+services:
+  db:
+    image: postgres:latest
+    restart: unless-stopped
+    environment:
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_DB=${POSTGRES_DATABASE}
+      - PGDATA=/var/lib/postgresql/data/db-nest-api/
+    volumes:
+      - pg-data:/var/lib/postgresql/data
+    command:
+      ['postgres', '-c', 'logging_collector=on', '-c', 'log_statement=all']
+    networks:
+      - my_network
+    ports:
+      - ${PG_PORT}:${PG_PORT}
+    healthcheck:
+      test: ['CMD', 'pg_isready']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    # environment:
+    #   - DATABASE_URL=${DATABASE_URL}
+    #   - LOG_LEVEL=${LOG_LEVEL}
+    #   - LOCALE=${LOCALE}
+    #   - TIME_ZONE=${TIME_ZONE}
+    #   - LOG_TO_CONSOLE=${LOG_TO_CONSOLE}
+    #   - LOG_TO_FILE=${LOG_TO_FILE}
+    #   - LOG_FILE_PATH=${LOG_FILE_PATH}
+    #   - ERROR_FILE_PATH=${ERROR_FILE_PATH}
+    #   - LOG_FILE_MAX_SIZE=${LOG_FILE_MAX_SIZE}
+    #   - BCRYPT_SALT_ROUND=${BCRYPT_SALT_ROUND}
+    #   - JWT_SECRET=${JWT_SECRET}
+    #   - JWT_EXPIRE_TIME=${JWT_EXPIRE_TIME}
+    #   - JWT_SECRET_REFRESH_KEY=${JWT_SECRET_REFRESH_KEY}
+    #   - JWT_REFRESH_EXPIRE_TIME=${JWT_REFRESH_EXPIRE_TIME}
+    ports:
+      - ${PORT}:${PORT}
+    depends_on: [db]
+    networks:
+      - my_network
+    volumes:
+      - ./src:/app/src
+
+volumes:
+  pg-data:
+  pg-log:
+  pgadmin:
+
+networks:
+  my_network:
+    driver: bridge
