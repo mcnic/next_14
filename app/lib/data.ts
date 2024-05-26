@@ -1,4 +1,5 @@
 // import { sql } from '@vercel/postgres';
+import prisma from '@/prisma/db';
 import {
   CustomerField,
   CustomersTableType,
@@ -7,51 +8,65 @@ import {
   LatestInvoiceRaw,
   User,
   Revenue,
+  LatestInvoice,
 } from './definitions';
 import { formatCurrency } from './utils';
+import { InvoicesMobileSkeleton } from '../ui/skeletons';
 
 export async function fetchRevenue() {
   // Add noStore() here to prevent the response from being cached.
   // This is equivalent to in fetch(..., {cache: 'no-store'}).
 
-  // try {
-    // // Artificially delay a response for demo purposes.
-    // // Don't do this in production :)
+  try {
+    // Artificially delay a response for demo purposes.
+    // Don't do this in production :)
 
-    // // console.log('Fetching revenue data...');
-    // // await new Promise((resolve) => setTimeout(resolve, 3000));
+    // console.log('Fetching revenue data...');
+    // await new Promise((resolve) => setTimeout(resolve, 3000));
 
-    // const data = await sql<Revenue>`SELECT * FROM revenue`;
+    const data = await prisma.revenue.findMany();
 
-    // // console.log('Data fetch completed after 3 seconds.');
+    // console.log('Data fetch completed after 3 seconds.');
 
-    // return data.rows;
-    return []
-  // } catch (error) {
-  //   console.error('Database Error:', error);
-  //   throw new Error('Failed to fetch revenue data.');
-  // }
+    return data;
+  } catch (error) {
+    console.error('Database Error:', error);
+    throw new Error('Failed to fetch revenue data.');
+  }
 }
 
-// export async function fetchLatestInvoices() {
-//   try {
-//     const data = await sql<LatestInvoiceRaw>`
-//       SELECT invoices.amount, customers.name, customers.image_url, customers.email, invoices.id
-//       FROM invoices
-//       JOIN customers ON invoices.customer_id = customers.id
-//       ORDER BY invoices.date DESC
-//       LIMIT 5`;
+export async function fetchLatestInvoices() {
+  try {
+    const data = await prisma.invoice.findMany({
+      select: {
+        id: true,
+        amount: true,
+        Customer: {
+          select: {
+            name: true,
+            image_url: true,
+            email: true,
+          },
+        },
+      },
+      relationLoadStrategy: 'join',
+      orderBy: [{ date: 'desc' }],
+      take: 10,
+    });
 
-//     const latestInvoices = data.rows.map((invoice) => ({
-//       ...invoice,
-//       amount: formatCurrency(invoice.amount),
-//     }));
-//     return latestInvoices;
-//   } catch (error) {
-//     console.error('Database Error:', error);
-//     throw new Error('Failed to fetch the latest invoices.');
-//   }
-// }
+    const latestInvoices = data.map(({ id, amount, Customer }) => ({
+      id,
+      amount: formatCurrency(amount),
+      name: Customer.name,
+      image_url: Customer.image_url,
+      email: Customer.email,
+    }));
+    return latestInvoices;
+  } catch (error) {
+    console.error('Database Error:', error);
+    throw new Error('Failed to fetch the latest invoices.');
+  }
+}
 
 // export async function fetchCardData() {
 //   try {

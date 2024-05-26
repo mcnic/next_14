@@ -9,3 +9,8 @@ For more information, see the [course curriculum](https://nextjs.org/learn) on t
 build `docker compose build`
 start `docker run -it --rm -p 5432:5432 -e POSTGRES_PASSWORD=postgres postgres`
 test connect `psql -h localhost -p 5432 -U postgres -d postgres -W`
+
+## DB
+
+`npx prisma generate` for renew prisma
+`npm run db:migrate` for migrate data after change schema
