@@ -1,3 +1,5 @@
+import { unstable_noStore as noStore } from 'next/cache';
+
 // import { sql } from '@vercel/postgres';
 import prisma from '@/prisma/db';
 import {
@@ -17,17 +19,18 @@ import { Prisma } from '@prisma/client';
 export async function fetchRevenue() {
   // Add noStore() here to prevent the response from being cached.
   // This is equivalent to in fetch(..., {cache: 'no-store'}).
+  noStore();
 
   try {
     // Artificially delay a response for demo purposes.
     // Don't do this in production :)
 
-    // console.log('Fetching revenue data...');
-    // await new Promise((resolve) => setTimeout(resolve, 3000));
+    console.log('Fetching revenue data...');
+    await new Promise((resolve) => setTimeout(resolve, 3000));
 
     const data = await prisma.revenue.findMany();
 
-    // console.log('Data fetch completed after 3 seconds.');
+    console.log('Data fetch completed after 3 seconds.');
 
     return data;
   } catch (error) {
@@ -37,6 +40,8 @@ export async function fetchRevenue() {
 }
 
 export async function fetchLatestInvoices() {
+  noStore();
+
   try {
     const data = await prisma.invoice.findMany({
       select: {
@@ -62,6 +67,9 @@ export async function fetchLatestInvoices() {
       image_url: Customer.image_url,
       email: Customer.email,
     }));
+
+    await new Promise((resolve) => setTimeout(resolve, 1000));
+
     return latestInvoices;
   } catch (error) {
     console.error('Database Error:', error);
@@ -70,6 +78,8 @@ export async function fetchLatestInvoices() {
 }
 
 export async function fetchCardData() {
+  noStore();
+
   try {
     const query = Prisma.raw(`SELECT
        SUM(CASE WHEN status = 'PAID' THEN amount ELSE 0 END) AS "paid",
@@ -91,16 +101,13 @@ export async function fetchCardData() {
       }),
     ]);
 
-    const numberOfInvoices = Number(data[0] ?? '0');
-    const numberOfCustomers = Number(data[1] ?? '0');
-    const totalPaidInvoices = formatCurrency(data[2].length ?? '0');
-    const totalPendingInvoices = formatCurrency(data[3].length ?? '0');
+    await new Promise((resolve) => setTimeout(resolve, 2000));
 
     return {
-      numberOfCustomers,
-      numberOfInvoices,
-      totalPaidInvoices,
-      totalPendingInvoices,
+      numberOfCustomers: Number(data[0] ?? '0'),
+      numberOfInvoices: Number(data[1] ?? '0'),
+      totalPaidInvoices: formatCurrency(data[2].length ?? '0'),
+      totalPendingInvoices: formatCurrency(data[3].length ?? '0'),
     };
   } catch (error) {
     console.error('Database Error:', error);
